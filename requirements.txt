@@ -1,7 +1,8 @@
-import streamlit as st
-import pandas as pd
-import joblib
-from lime.lime_tabular import LimeTabularExplainer
-import numpy as np
-from sklearn.preprocessing import RobustScaler
-import matplotlib.pyplot as plt
+streamlit==1.39.0
+pandas==1.5.3
+joblib==1.2.0
+lime==0.2.0.1
+numpy==1.24.3
+scikit-learn==1.2.2
+matplotlib==3.7.1
+openpyxl==3.1.2
