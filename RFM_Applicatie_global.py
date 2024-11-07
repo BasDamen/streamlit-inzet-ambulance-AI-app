@@ -29,7 +29,7 @@ X_scaled = scaler.fit_transform(data_model_gebruiken_heatmap[feature_selection])
 
 # Download het modelbestand van GitHub
 model_url = 'https://raw.githubusercontent.com/BasDamen/streamlit-inzet-ambulance-AI-app/main/random_forest_model.pkl'
-model_path = '/tmp/random_forest_model.pkl'  # Tijdelijke opslaglocatie
+model_path = 'random_forest_model.pkl'  #  opslaglocatie
 
 # Download het bestand naar de lokale map
 urllib.request.urlretrieve(model_url, model_path)
