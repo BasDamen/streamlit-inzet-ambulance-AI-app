@@ -24,8 +24,8 @@ feature_selection = ['Inzetlocatie RAV-regio_RAV Zuid Limburg (24)',
                     "Urgentie MKA_A2", "Urgentie MKA_B", "Weekend"]
 
 # Schaal de data met RobustScaler
-scaler = RobustScaler()
-X_scaled = scaler.fit_transform(data_model_gebruiken_heatmap[feature_selection])
+#scaler = RobustScaler()
+#X_scaled = scaler.fit_transform(data_model_gebruiken_heatmap[feature_selection])
 
 # Download het modelbestand van GitHub
 model_url = 'https://raw.githubusercontent.com/BasDamen/streamlit-inzet-ambulance-AI-app/main/random_forest_model.pkl'
@@ -72,10 +72,10 @@ if st.button("Maak voorspelling"):
     X_inference = pd.DataFrame(data)
 
     # Schaal de invoerdata
-    X_inference_scaled = scaler.transform(X_inference)
+    #X_inference_scaled = scaler.transform(X_inference)
 
     # Voorspellingen maken
-    predictions = RFM.predict(X_inference_scaled)
+    predictions = RFM.predict(X_inference)
 
     # Toon het resultaat, afgerond op 2 decimalen
     st.write("Voorspelling aantal ambulanceritten:", round(predictions[0], 2))
