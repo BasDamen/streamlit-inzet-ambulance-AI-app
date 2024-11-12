@@ -3,8 +3,6 @@ import pandas as pd
 import joblib
 from lime.lime_tabular import LimeTabularExplainer
 import numpy as np
-from sklearn.preprocessing import RobustScaler
-import matplotlib.pyplot as plt
 import urllib.request
 
 # Bestanden ophalen vanaf GitHub via raw URL
@@ -23,13 +21,9 @@ feature_selection = ['Inzetlocatie RAV-regio_RAV Zuid Limburg (24)',
                     "Dagdeel_Nacht", "Dagdeel_Dag", 
                     "Urgentie MKA_A2", "Urgentie MKA_B", "Weekend"]
 
-# Schaal de data met RobustScaler
-#scaler = RobustScaler()
-#X_scaled = scaler.fit_transform(data_model_gebruiken_heatmap[feature_selection])
-
 # Download het modelbestand van GitHub
 model_url = 'https://raw.githubusercontent.com/BasDamen/streamlit-inzet-ambulance-AI-app/main/random_forest_model.pkl'
-model_path = 'random_forest_model.pkl'  #  opslaglocatie
+model_path = 'random_forest_model.pkl'  # opslaglocatie
 
 # Download het bestand naar de lokale map
 urllib.request.urlretrieve(model_url, model_path)
@@ -40,11 +34,12 @@ RFM = joblib.load(model_path)
 # Stel de feature-namen in
 feature_names = ["Inzetlocatie RAV-regio_RAV Zuid Limburg (24)", "Dagdeel_Nacht", "Dagdeel_Dag", "Urgentie MKA_A2", "Urgentie MKA_B", "Weekend"]
 
-# Configureer de LIME explainer
+# Configureer de LIME explainer en geef alle features als categorisch op
 explainer = LimeTabularExplainer(
-    training_data=data_model_gebruiken_heatmap[feature_selection],
+    training_data=data_model_gebruiken_heatmap[feature_selection].values,
     feature_names=feature_selection,
-    mode='regression'
+    mode='regression',
+    categorical_features=list(range(len(feature_selection)))  # Alle features zijn categorisch
 )
 
 # Titel van de applicatie
@@ -71,9 +66,6 @@ if st.button("Maak voorspelling"):
     }
     X_inference = pd.DataFrame(data)
 
-    # Schaal de invoerdata
-    #X_inference_scaled = scaler.transform(X_inference)
-
     # Voorspellingen maken
     predictions = RFM.predict(X_inference)
 
@@ -81,7 +73,7 @@ if st.button("Maak voorspelling"):
     st.write("Voorspelling aantal ambulanceritten:", round(predictions[0], 2))
 
     # LIME-explanation genereren
-    exp = explainer.explain_instance(X_inference_scaled[0], RFM.predict, num_features=len(feature_selection))
+    exp = explainer.explain_instance(X_inference.values[0], RFM.predict, num_features=len(feature_selection))
 
     # LIME-explanation weergeven
     st.subheader("LIME Explanation - Inzicht in de voorspelling")
