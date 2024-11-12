@@ -42,7 +42,7 @@ feature_names = ["Inzetlocatie RAV-regio_RAV Zuid Limburg (24)", "Dagdeel_Nacht"
 
 # Configureer de LIME explainer
 explainer = LimeTabularExplainer(
-    training_data=X_scaled,
+    training_data=data_model_gebruiken_heatmap[feature_selection],
     feature_names=feature_selection,
     mode='regression'
 )
