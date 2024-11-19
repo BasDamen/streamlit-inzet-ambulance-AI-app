@@ -73,6 +73,12 @@ if page == "Informatie":
     Wanneer een voorspelling is gemaakt met de ingevoerde waardes, kun je de toelichting van de voorspelling vinden in de Lime Explainer.
              
     Daarnaast is er nog een knop die berekent hoeveel MCA of ALS ambulances nodig zijn op basis van het aantal voorspelde ambulanceritten. Hier wordt rekening gehouden met de inzetbaarheid van de ambulances en de gemiddelde bezettingstijd. *Deze functie moet worden bijgewerkt indien er verandering plaatsvinden in de inzetbaarheid van een ambulances*.
+    
+    **Let op**: In de praktijk zijn er 24-uursdiensten die voor elk dagdeel één ambulance beschikbaar hebben. De inzetbaarheid van deze diensten is echter gebonden aan specifieke regelgeving en het wisselende perspectief over de inzetbaarheid per logistieke centralist. Hierdoor kunnen niet altijd alle A-ritten door de 24-uursdiensten gedekt worden. Dit is vooral van belang in Regio 23, waar het aantal 24-uursdiensten hoger ligt, en waar dus extra aandacht nodig is bij de toewijzing van diensten voor de dekking van de ambulanceritten.
+
+             
+    *Deze applicatie dienst als hulpmiddel en is geen bindende richtlijn!*
+
 
     **Wat is de Lime Explainer?**
              
