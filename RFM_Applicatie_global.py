@@ -42,6 +42,7 @@ feature_selection = ['Inzetlocatie RAV-regio_RAV Zuid Limburg (24)',
                     "Dagdeel_Nacht", "Dagdeel_Dag", 
                     "Urgentie MKA_A2", "Urgentie MKA_B", "Weekend"]
 
+
 # Configureer de LIME explainer en geef alle features als categorisch op
 explainer = LimeTabularExplainer(
     training_data=data_model_gebruiken_heatmap[feature_selection].values,
@@ -50,11 +51,11 @@ explainer = LimeTabularExplainer(
     categorical_features=list(range(len(feature_selection)))  # Alle features zijn categorisch
 )
 
+
 # Bouw een dynamische bezettingstijden mapping
 bezettingstijden_dynamic = aggregated_data_model_gebruiken.groupby(
     ['Dagdeel', 'Inzetlocatie RAV-regio', 'Urgentie MKA']
 )['gemiddelde_bezettijd'].mean().to_dict()
-
 
 # Hoofd titel van de applicatie
 st.title("AI Voorspellingsapplicatie - Ambulance Inzet")
@@ -146,6 +147,7 @@ elif page == "Voorspelling":
                 for regio in inzetlocaties:
                     data = {
                         "Inzetlocatie RAV-regio_RAV Zuid Limburg (24)" if regio == "Regio 24" else "Inzetlocatie RAV-regio_RAV Noord- en Midden Limburg": [1 if regio == "Regio 24" else 0],
+                        "Dagdeel_Nacht": [1 if dag == "Nacht" else 0],
                         "Dagdeel_Dag": [1 if dag == "Dag" else 0],
                         "Urgentie MKA_A2": [1 if urgentie == "A2" else 0],
                         "Urgentie MKA_B": [1 if urgentie == "B" else 0],
