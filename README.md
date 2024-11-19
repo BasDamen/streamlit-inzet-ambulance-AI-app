@@ -7,4 +7,6 @@ Deze Repository bevat alle bestanden die nodig zijn om de AI applicatie te runne
 
 
 De applicatie is te gebruiken via:
-https://app-inzet-ambulance-ai-app-byjedcrihcbzyhmtasyra7.streamlit.app/ 
+https://app-inzet-ambulance-ai-app-byjedcrihcbzyhmtasyra7.streamlit.app/
+
+De gebruiksaanwijzing voor de applicatie is te vinden in het document 'Handleiding'
