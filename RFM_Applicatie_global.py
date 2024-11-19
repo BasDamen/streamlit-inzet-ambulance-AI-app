@@ -8,21 +8,6 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import math
 
-# Bestanden ophalen vanaf GitHub via raw URL
-#data_url = 'https://raw.githubusercontent.com/BasDamen/streamlit-inzet-ambulance-AI-app/main/bronbestand_AI_model.xlsx'
-#aggregated_data_model_gebruiken = pd.read_excel(data_url)
-
-# Download het modelbestand van GitHub
-#model_url = 'https://raw.githubusercontent.com/BasDamen/streamlit-inzet-ambulance-AI-app/main/random_forest_model.pkl'
-#model_path = 'random_forest_model.pkl'  # opslaglocatie
-
-# Download het bestand naar de lokale map
-#urllib.request.urlretrieve(model_url, model_path)
-
-# Laad het model
-#RFM = joblib.load(model_path)
-
-
 # Cache de gegevens en het model om laadtijd te verminderen
 @st.cache_data
 def load_data():
@@ -122,7 +107,7 @@ elif page == "Voorspelling":
 
     inzetlocaties = st.multiselect(
         "Kies RAV-regio('s)", 
-        ["RAV Zuid Limburg", "RAV Noord- en Midden Limburg"], 
+        ["Regio 23", "Regio 24"], 
         default=[]
     )
 
@@ -160,8 +145,7 @@ elif page == "Voorspelling":
             for urgentie in urgenties:
                 for regio in inzetlocaties:
                     data = {
-                        "Inzetlocatie RAV-regio_RAV Zuid Limburg (24)" if regio == "RAV Zuid Limburg" else "Inzetlocatie RAV-regio_RAV Noord- en Midden Limburg": [1 if regio == "RAV Zuid Limburg" else 0],
-                        "Dagdeel_Nacht": [1 if dag == "Nacht" else 0],
+                        "Inzetlocatie RAV-regio_RAV Zuid Limburg (24)" if regio == "Regio 24" else "Inzetlocatie RAV-regio_RAV Noord- en Midden Limburg": [1 if regio == "Regio 24" else 0],
                         "Dagdeel_Dag": [1 if dag == "Dag" else 0],
                         "Urgentie MKA_A2": [1 if urgentie == "A2" else 0],
                         "Urgentie MKA_B": [1 if urgentie == "B" else 0],
@@ -217,43 +201,43 @@ elif page == "Voorspelling":
             else:
                 st.write("Voorspelling is nog niet gemaakt. Klik op 'Maak voorspelling' om eerst een voorspelling te genereren.")
 
-# Controleer of voorspellingen beschikbaar zijn
-if "lime_explanations" in st.session_state and st.session_state.lime_explanations:
-    if st.button("Bereken benodigde ambulances"):
-        # Maak een lege dictionary om de benodigde ambulances per dagdeel op te slaan
-        ambulances_per_dagdeel = {}
+    # Controleer of voorspellingen beschikbaar zijn
+    if "lime_explanations" in st.session_state and st.session_state.lime_explanations:
+        if st.button("Bereken benodigde ambulances"):
+            # Maak een lege dictionary om de benodigde ambulances per dagdeel op te slaan
+            ambulances_per_dagdeel = {}
 
-        # Loop door de LIME verklaringen en bereken het aantal benodigde ambulances per dagdeel
-        for exp_data in st.session_state.lime_explanations:
-            prediction = exp_data['Prediction']
-            dagdeel = exp_data['Dagdeel']
-            urgentie = exp_data['Urgentie']
-            regio = exp_data['Regio']
+            # Loop door de LIME verklaringen en bereken het aantal benodigde ambulances per dagdeel
+            for exp_data in st.session_state.lime_explanations:
+                prediction = exp_data['Prediction']
+                dagdeel = exp_data['Dagdeel']
+                urgentie = exp_data['Urgentie']
+                regio = exp_data['Regio']
 
-            # Controleer of de sleutels bestaan in de bezettingstijden
-            key = (dagdeel, regio + " (24)" if regio == "RAV Zuid Limburg" else regio + " (23)", urgentie)
-            try:
-                bezettingstijd = bezettingstijden_dynamic[key]
-            except KeyError as e:
-                st.error(f"Fout bij het ophalen van bezettingstijd: {e}")
-                st.write(f"Controleer of de invoerwaarden correct zijn: dagdeel={dagdeel}, regio={regio}, urgentie={urgentie}")
-                bezettingstijd = 0  # Gebruik standaardwaarde om crash te voorkomen
+                # Controleer of de sleutels bestaan in de bezettingstijden
+                key = (dagdeel,(regio.replace("Regio 24", "RAV Zuid Limburg (24)").replace("Regio 23", "RAV Noord- en Midden Limburg (23)")), urgentie)
+                try:
+                    bezettingstijd = bezettingstijden_dynamic[key]
+                except KeyError as e:
+                    st.error(f"Fout bij het ophalen van bezettingstijd: {e}")
+                    st.write(f"Controleer of de invoerwaarden correct zijn: dagdeel={dagdeel}, regio={regio}, urgentie={urgentie}")
+                    bezettingstijd = 0  # Gebruik standaardwaarde om crash te voorkomen
 
 
-            # Bereken de bezettingstijd per dagdeel
-            if dagdeel not in ambulances_per_dagdeel:
-                ambulances_per_dagdeel[dagdeel] = {'A': 0, 'B': 0}  # Initialiseer het dagdeel in de dictionary
+                # Bereken de bezettingstijd per dagdeel
+                if dagdeel not in ambulances_per_dagdeel:
+                    ambulances_per_dagdeel[dagdeel] = {'A': 0, 'B': 0}  # Initialiseer het dagdeel in de dictionary
 
-            if urgentie == 'B':  # B-urgentie is MCA
-                ambulances_per_dagdeel[dagdeel]['B'] += prediction * bezettingstijd
-            else:  # A-urgentie is ALS
-                ambulances_per_dagdeel[dagdeel]['A'] += prediction * bezettingstijd
+                if urgentie == 'B':  # B-urgentie is MCA
+                    ambulances_per_dagdeel[dagdeel]['B'] += prediction * bezettingstijd
+                else:  # A-urgentie is ALS
+                    ambulances_per_dagdeel[dagdeel]['A'] += prediction * bezettingstijd
 
-        # Bereken het aantal benodigde ambulances per dagdeel
-        for dagdeel, bezetting in ambulances_per_dagdeel.items():
-            aantal_ambulances_B = math.ceil(bezetting['B'] / 336) # beschikbaarheid van 70% voor 8-uurige MCA dienst (480 minuten)
-            aantal_ambulances_A = math.ceil(bezetting['A'] / 240) # beschikbaarheid van 50% voor 8-uurige ALS dienst (480 minuten)
+            # Bereken het aantal benodigde ambulances per dagdeel
+            for dagdeel, bezetting in ambulances_per_dagdeel.items():
+                aantal_ambulances_B = math.ceil(bezetting['B'] / 336) # beschikbaarheid van 70% voor 8-uurige MCA dienst (480 minuten)
+                aantal_ambulances_A = math.ceil(bezetting['A'] / 240) # beschikbaarheid van 50% voor 8-uurige ALS dienst (480 minuten)
 
-            # Toon de resultaten per dagdeel
-            st.write(f"Aantal benodigde MCA-ambulances voor B-urgentie in dagdeel {dagdeel}: {aantal_ambulances_B}")
-            st.write(f"Aantal benodigde ALS-ambulances voor A-urgentie in dagdeel {dagdeel}: {aantal_ambulances_A}")
+                # Toon de resultaten per dagdeel
+                st.write(f"Aantal benodigde MCA-ambulances voor B-urgentie in dagdeel {dagdeel}: {aantal_ambulances_B}")
+                st.write(f"Aantal benodigde ALS-ambulances voor A-urgentie in dagdeel {dagdeel}: {aantal_ambulances_A}")
