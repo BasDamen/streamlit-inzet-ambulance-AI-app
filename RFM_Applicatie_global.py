@@ -38,9 +38,7 @@ one_hot_columns = ['Soort_dag', 'Feestdag', 'Feestdag_specifiek',
 data_model_gebruiken_heatmap = pd.get_dummies(aggregated_data_model_gebruiken, columns=one_hot_columns)
 
 # Feature selectie
-feature_selection = ['Inzetlocatie RAV-regio_RAV Zuid Limburg (24)', 
-                    "Dagdeel_Nacht", "Dagdeel_Dag", 
-                    "Urgentie MKA_A2", "Urgentie MKA_B", "Weekend"]
+feature_selection = ['Inzetlocatie RAV-regio_RAV Zuid Limburg (24)', "Dagdeel_Nacht", "Dagdeel_Dag", "Urgentie MKA_A2", "Urgentie MKA_B", 'Feestdag_Nieuwjaarsdag', 'Feestdag_Carnaval', 'Weekend']
 
 
 # Configureer de LIME explainer en geef alle features als categorisch op
@@ -69,7 +67,7 @@ with st.sidebar:
 if page == "Informatie":
     st.subheader("Welkom in de applicatie voor de voorspelling van de drukte op basis van externe factoren")
     st.write(""" 
-    Deze applicatie voorspelt het aantal ambulanceritten die gereden moeten worden per dag aan de hand van de ingevoerde waardes. De voorspellingen worden gemaakt met een foutmarge van 5 ambulanceritten. Dit betekent dat er een verschil is van ongeveer 5 ritten boven of onder de voorspelde waarde.
+    Deze applicatie voorspelt het aantal ambulanceritten die gereden moeten worden per dag aan de hand van de ingevoerde waardes. De voorspellingen worden gemaakt met een gemiddelde foutmarge van 5 ambulanceritten. Dit betekent dat er gemiddeld een verschil is van ongeveer 5 ritten boven of onder de voorspelde waarde. Het effect van de foutmarge wordt bepaald door de omvang van de voorspelling. Des te groter de voorspelling, des te lager het effect van de foutmarge.
     Wanneer een voorspelling is gemaakt met de ingevoerde waardes, kun je de toelichting van de voorspelling vinden in de Lime Explainer.
              
     Daarnaast is er nog een knop die berekent hoeveel MCA of ALS ambulances nodig zijn op basis van het aantal voorspelde ambulanceritten. Hier wordt rekening gehouden met de inzetbaarheid van de ambulances en de gemiddelde bezettingstijd. *Deze functie moet worden bijgewerkt indien er verandering plaatsvinden in de inzetbaarheid van een ambulances*.
@@ -77,13 +75,13 @@ if page == "Informatie":
     **Let op**: In de praktijk zijn er 24-uursdiensten die voor elk dagdeel één ambulance beschikbaar hebben. De inzetbaarheid van deze diensten is echter gebonden aan specifieke regelgeving en het wisselende perspectief over de inzetbaarheid per logistieke centralist. Hierdoor kunnen niet altijd alle A-ritten door de 24-uursdiensten gedekt worden. Dit is vooral van belang in Regio 23, waar het aantal 24-uursdiensten hoger ligt, en waar dus extra aandacht nodig is bij de toewijzing van diensten voor de dekking van de ambulanceritten.
 
              
-    *Deze applicatie dienst als hulpmiddel en is geen bindende richtlijn!*
+    *Deze applicatie dient als hulpmiddel en is geen bindende richtlijn!*
 
 
     **Wat is de Lime Explainer?**
              
     De Lime Explainer is een tool die uitlegt waarom een machine learning model een bepaalde voorspelling heeft gemaakt. 
-    Het geeft inzicht in welke factoren het meest invloed hebben gehad op het resultaat, zodat je de voorspelling beter kunt begrijpen.
+    Het geeft inzicht in welke factoren het meest invloed hebben gehad op het resultaat, zodat je de voorspelling beter kunt begrijpen. Elke voorspelling is een combinatie van de mogelijkheden die als invoerwaarden in de applicatie worden ingevoerd.
     
     *LIME-visualisatie:*
 
@@ -99,7 +97,7 @@ if page == "Informatie":
 elif page == "Voorspelling":
     st.subheader("Maak een voorspelling voor het aantal ambulanceritten en de benodigde ambulances")
 
-    # Maak keuzemenu's voor de parameters (meervoudige selectie)
+    # Maak keuzemenu's voor de parameters (meervoudige selectie en selectboxen)
     dagdeel = st.multiselect(
         "Kies Dagdeel/Dagdelen", 
         ["Dag", "Avond", "Nacht"], 
@@ -118,6 +116,12 @@ elif page == "Voorspelling":
         default=[]
     )
 
+    feestdag = st.selectbox(
+        "Kies de Feestdag", 
+        ["Geen feestdag", "Carnaval", "Nieuwjaarsdag"], 
+        index=0
+    )
+
     # Voeg de selectbox voor Weekend toe
     weekend = st.selectbox(
         "Is het Weekend?", 
@@ -126,7 +130,7 @@ elif page == "Voorspelling":
     )
 
     # Check if any input changed and reset session state
-    input_hash = hash((tuple(dagdeel), tuple(urgenties), tuple(inzetlocaties), weekend))
+    input_hash = hash((tuple(dagdeel), tuple(urgenties), tuple(inzetlocaties), tuple(feestdag), weekend))
     if "input_hash" in st.session_state and st.session_state.input_hash != input_hash:
         # Reset the session state when the input changes
         st.session_state.lime_explanations = []
@@ -136,8 +140,9 @@ elif page == "Voorspelling":
     st.session_state.input_hash = input_hash
 
     # Controleer of alle velden zijn ingevuld
-    is_valid_input = bool(dagdeel) and bool(urgenties) and bool(inzetlocaties)
+    is_valid_input = bool(dagdeel) and bool(urgenties) and bool(inzetlocaties) and bool(feestdag)
     make_prediction_disabled = not is_valid_input  # Disable de knop als de invoer niet geldig is
+
 
     # Voorspelling uitvoeren bij het klikken op de knop
     if st.button("Maak voorspelling", disabled=make_prediction_disabled):
@@ -147,18 +152,25 @@ elif page == "Voorspelling":
         # Zet Weekend om naar binaire waarde
         weekend_value = 1 if weekend == "Ja" else 0
 
-        # Loop door de geselecteerde dagdelen, urgenties en regio's om voorspellingen en uitleg te maken
+        # Zet Feestdag om naar binaire waarden
+        feestdag_carnaval = 1 if feestdag == "Carnaval" else 0
+        feestdag_nieuwjaarsdag = 1 if feestdag == "Nieuwjaarsdag" else 0
+        
+        # Loop door de geselecteerde dagdelen, urgenties en regio's heen om voorspellingen en uitleg te maken
         for dag in dagdeel:
             for urgentie in urgenties:
-                for regio in inzetlocaties:
+                for regio in inzetlocaties: 
                     data = {
                         "Inzetlocatie RAV-regio_RAV Zuid Limburg (24)" if regio == "Regio 24" else "Inzetlocatie RAV-regio_RAV Noord- en Midden Limburg": [1 if regio == "Regio 24" else 0],
                         "Dagdeel_Nacht": [1 if dag == "Nacht" else 0],
                         "Dagdeel_Dag": [1 if dag == "Dag" else 0],
                         "Urgentie MKA_A2": [1 if urgentie == "A2" else 0],
                         "Urgentie MKA_B": [1 if urgentie == "B" else 0],
-                        "Weekend": [weekend_value]  # Gebruik de binaire waarde voor Weekend
+                        "Feestdag_Nieuwjaarsdag": [feestdag_nieuwjaarsdag],
+                        "Feestdag_Carnaval": [feestdag_carnaval],
+                        "Weekend": [weekend_value]                    
                     }
+
 
                     X_inference = pd.DataFrame(data)
                     prediction = RFM.predict(X_inference)
@@ -170,6 +182,9 @@ elif page == "Voorspelling":
                         "Dagdeel": dag,
                         "Urgentie": urgentie,
                         "Regio": regio,
+                        "Feestdag_Nieuwjaarsdag": feestdag_nieuwjaarsdag,
+                        "Feestdag_Carnaval": feestdag_carnaval,
+                        "Weekend":  weekend_value,
                         "Prediction": rounded_prediction,
                         "Explanation": exp
                     })
@@ -222,6 +237,7 @@ elif page == "Voorspelling":
                 urgentie = exp_data['Urgentie']
                 regio = exp_data['Regio']
 
+
                 # Controleer of de sleutels bestaan in de bezettingstijden
                 key = (dagdeel,(regio.replace("Regio 24", "RAV Zuid Limburg (24)").replace("Regio 23", "RAV Noord- en Midden Limburg (23)")), urgentie)
                 try:
@@ -243,8 +259,8 @@ elif page == "Voorspelling":
 
             # Bereken het aantal benodigde ambulances per dagdeel
             for dagdeel, bezetting in ambulances_per_dagdeel.items():
-                aantal_ambulances_B = round(bezetting['B'] / 336, 1) # beschikbaarheid van 70% voor 8-uurige MCA dienst (480 minuten)
-                aantal_ambulances_A = round(bezetting['A'] / 240, 1) # beschikbaarheid van 50% voor 8-uurige ALS dienst (480 minuten)
+                aantal_ambulances_B = math.ceil(bezetting['B'] / 336) # beschikbaarheid van 70% voor 8-uurige MCA dienst (480 minuten)
+                aantal_ambulances_A = math.ceil(bezetting['A'] / 240) # beschikbaarheid van 50% voor 8-uurige ALS dienst (480 minuten)
 
                 # Toon de resultaten per dagdeel
                 st.write(f"Aantal benodigde MCA-ambulances voor B-urgentie in dagdeel {dagdeel}: {aantal_ambulances_B}")
