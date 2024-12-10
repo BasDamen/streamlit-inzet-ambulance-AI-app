@@ -96,12 +96,6 @@ if page == "Informatie":
 # Voorspelling pagina
 elif page == "Voorspelling":
     st.subheader("Maak een voorspelling voor het aantal ambulanceritten en de benodigde ambulances")
-
-# Voeg een knop toe om de cache te wissen
-    if st.button("Clear Cache"):
-        st.cache_data.clear()
-        st.cache_resource.clear()
-        st.success("Cache is gewist!")
     
     # Maak keuzemenu's voor de parameters (meervoudige selectie en selectboxen)
     dagdeel = st.multiselect(
