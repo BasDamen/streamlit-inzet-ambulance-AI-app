@@ -96,7 +96,7 @@ if page == "Informatie":
 # Voorspelling pagina
 elif page == "Voorspelling":
     st.subheader("Maak een voorspelling voor het aantal ambulanceritten en de benodigde ambulances")
-    
+
     # Maak keuzemenu's voor de parameters (meervoudige selectie en selectboxen)
     dagdeel = st.multiselect(
         "Kies Dagdeel/Dagdelen", 
@@ -259,8 +259,8 @@ elif page == "Voorspelling":
 
             # Bereken het aantal benodigde ambulances per dagdeel
             for dagdeel, bezetting in ambulances_per_dagdeel.items():
-                aantal_ambulances_B = math.ceil(bezetting['B'] / 336) # beschikbaarheid van 70% voor 8-uurige MCA dienst (480 minuten)
-                aantal_ambulances_A = math.ceil(bezetting['A'] / 240) # beschikbaarheid van 50% voor 8-uurige ALS dienst (480 minuten)
+                aantal_ambulances_B = round(bezetting['B'] / 336, 1) # beschikbaarheid van 70% voor 8-uurige MCA dienst (480 minuten)
+                aantal_ambulances_A = round(bezetting['A'] / 240, 1) # beschikbaarheid van 50% voor 8-uurige ALS dienst (480 minuten)
 
                 # Toon de resultaten per dagdeel
                 st.write(f"Aantal benodigde MCA-ambulances voor B-urgentie in dagdeel {dagdeel}: {aantal_ambulances_B}")
