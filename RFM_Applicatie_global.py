@@ -7,7 +7,7 @@ import urllib.request
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import math
-import os
+
 
 
 # Cache de gegevens en het model om laadtijd te verminderen
@@ -24,9 +24,7 @@ model_path = 'random_forest_model.pkl'
 def load_model(model_path):
     return joblib.load(model_path)
 
-if os.path.exists(model_path):
-    os.remove(model_path)
-urllib.request.urlretrieve(model_url, model_path)
+
 
 # Download het bestand naar de lokale map
 urllib.request.urlretrieve(model_url, model_path)
@@ -72,6 +70,7 @@ with st.sidebar:
 # Homepagina
 if page == "Informatie":
     st.subheader("Welkom in de applicatie voor de voorspelling van de drukte op basis van externe factoren")
+    
     st.write(""" 
     Deze applicatie voorspelt het aantal ambulanceritten die gereden moeten worden per dag aan de hand van de ingevoerde waardes. De voorspellingen worden gemaakt met een gemiddelde foutmarge van 5 ambulanceritten. Dit betekent dat er gemiddeld een verschil is van ongeveer 5 ritten boven of onder de voorspelde waarde. Het effect van de foutmarge wordt bepaald door de omvang van de voorspelling. Des te groter de voorspelling, des te lager het effect van de foutmarge.
     Wanneer een voorspelling is gemaakt met de ingevoerde waardes, kun je de toelichting van de voorspelling vinden in de Lime Explainer.
@@ -102,6 +101,9 @@ if page == "Informatie":
 # Voorspelling pagina
 elif page == "Voorspelling":
     st.subheader("Maak een voorspelling voor het aantal ambulanceritten en de benodigde ambulances")
+
+    if st.button("Cache wissen"):
+        st.cache_resource.clear()
 
     # Maak keuzemenu's voor de parameters (meervoudige selectie en selectboxen)
     dagdeel = st.multiselect(
