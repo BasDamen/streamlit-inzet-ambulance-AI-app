@@ -7,6 +7,8 @@ import urllib.request
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import math
+import os
+
 
 # Cache de gegevens en het model om laadtijd te verminderen
 @st.cache_data
@@ -21,6 +23,10 @@ model_path = 'random_forest_model.pkl'
 @st.cache_resource
 def load_model(model_path):
     return joblib.load(model_path)
+
+if os.path.exists(model_path):
+    os.remove(model_path)
+urllib.request.urlretrieve(model_url, model_path)
 
 # Download het bestand naar de lokale map
 urllib.request.urlretrieve(model_url, model_path)
